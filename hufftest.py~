@@ -10,8 +10,7 @@ def selftest(dut):
 def testcase(dut, filename):
 	time1 = time.time()
 	print "./src/%s ./Samples/%s" %(dut,filename)
-	os.system("./%s ./Samples/%s" %(dut,filename))
-	#os.system("./%s ./Samples/%s > ./testresults/testrun-%s-%s.txt" %(dut,filename,time.strftime("%b%d_%H:%M:%S"),filename))
+	os.system("./%s ./Samples/%s > ./testresults/testrun-%s-%s.txt" %(dut,filename,time.strftime("%b%d_%H:%M:%S"),filename))
 	return time1 - time.time()
 #test code
 saucename = "huff"

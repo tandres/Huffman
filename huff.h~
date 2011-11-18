@@ -100,7 +100,7 @@
     	if (root->height == 0) {
     		codetable[root->character][0] = *code;
     		codetable[root->character][1] = *length;
-    		//printf("%c, %ld %ld\n", (char) root->character, *code, *length);
+    		printf("%c, %ld %ld\n", (char) root->character, *code, *length);
     		return;  	
     	}
     	

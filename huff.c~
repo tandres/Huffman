@@ -298,7 +298,6 @@ int main(int argc, char * argv[])
 		        print_binary(0,code,code_length);
                         printf(" brem: %d\n",bits_remaining);
                     #endif
-                    fwrite(&output,sizeof(output),1,wfp);
                     output = code; //bits already written out will be shifted away
                     bits_remaining = sizeof(output)*8 - (code_length - bits_remaining);
 		    #ifdef __DEBUGPACK__
