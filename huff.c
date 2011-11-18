@@ -220,11 +220,16 @@ int main(int argc, char * argv[])
         printf("\n");
     #endif
     
-    
+    FILE *wfp;
     unsigned long int code_length = 0;
     unsigned long int code = 0;
-   	// Store code values in the codetable array
-   	get_codes(codetree, counts, &code_length, &code);
+    // using unsigned long to cut down on number of writes
+    unsigned long int output = 0;
+    int bits_remaining = sizeof(output) *8;
+    // Attempt to open/create the file with .huff appended
+    wfp = fopen(generate_output_filename(argv[1]),"w");
+    // Store code values in the codetable array
+    get_codes(wfp, &bits_remaining, &output, codetree, counts, &code_length, &code);
    	
     #ifdef __DEBUGCODES__
         // print 'codetable[][]' for debugging purposes
@@ -252,22 +257,17 @@ int main(int argc, char * argv[])
      */
     // We need a reasonably sized character buffer for reading
     char cbuff[256];
-    // using unsigned long to cut down on number of writes
-    unsigned long output = 0;
-    int result, bits_remaining = sizeof(output) *8;
+
+    int result;
     // We have to start the file over
     rewind(fhd);
-    FILE *wfp;
-    // Attempt to open the file with .huff appended
-    wfp = fopen(generate_output_filename(argv[1]),"w");
     if(wfp) {
         // fread returns number of elements read
         // if EOF then returns zero
         result = fread(cbuff, sizeof(char), 256, fhd);
-        //while( result > 0) {
+        while( result > 0) {
             i = 0;
             while( i < result) {
-                //i = 0;
                 // use character as index, find code and length
                 code_length = counts[(int)cbuff[i]][1];
                 code = counts[(int)cbuff[i]][0];
@@ -310,7 +310,8 @@ int main(int argc, char * argv[])
                 }
                 i++;
             }
-        //}
+            result = fread(cbuff, sizeof(char), 256, fhd);
+        }
         fclose(wfp);
     }   
     else {

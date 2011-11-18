@@ -83,9 +83,25 @@
         free_tree(root->left);
         node_destruct(root);
     }
-    
+
+    /* Function to pack and write bits to output file */
+    void pack(FILE *wfp, int *bits_remaining, unsigned long int *output, unsigned long int input, unsigned long length) {
+        if(length < *bits_remaining){
+            //no problem just pack em in
+            *output = (*output << length)|input;
+            *bits_remaining -= length;            
+        }
+        else {
+            //Can get nasty; have to overflow into next output
+            *output = (*output << *bits_remaining)|(input>>(length - *bits_remaining));
+            fwrite(output,sizeof(output),1,wfp);
+            *output = input; //bits already written out will be shifted away
+            *bits_remaining = sizeof(*output)*8 - (length - *bits_remaining);
+        }
+    }
+
     /* Function to get the codes out of the binary tree */
-    void get_codes(Node * root, unsigned long int codetable[257][2], unsigned long int * length, unsigned long int * code) {
+    void get_codes(FILE *wfp, int *bits_remaining, unsigned long int *output, Node * root, unsigned long int codetable[257][2], unsigned long int * length, unsigned long int * code) {
     	
     	/* The root should never equal null, but just in case, return to avaid a seg fault */
     	if (root == NULL) {
@@ -100,19 +116,21 @@
     	if (root->height == 0) {
     		codetable[root->character][0] = *code;
     		codetable[root->character][1] = *length;
-    		printf("%c, %ld %ld\n", (char) root->character, *code, *length);
+                pack(wfp, bits_remaining, output, 1, 1);
+                pack(wfp, bits_remaining, output, *code, *length);
+    		//printf("%c, %ld %ld\n", (char) root->character, *code, *length);
     		return;  	
     	}
-    	
+    	pack(wfp, bits_remaining, output, 0, 1);
     	/* If you are not at a leaf, increase the length and go down a level to the left */
     	(*length)++;
     	/* Shift the code left 1 bit (zero fill) to account for the next node's code */
     	*code = (*code)<<1;
-    	get_codes(root->left, codetable, length, code);
+    	get_codes( wfp, bits_remaining, output, root->left, codetable, length, code);
     	
     	/* Add 1 to the code to establish that the next node is to the right */
     	(*code)++;
-    	get_codes(root->right, codetable, length, code);
+    	get_codes( wfp, bits_remaining, output, root->right, codetable, length, code);
     	
     	/* Decrease the length and shift the code right 1 bit to return up to the parent */
     	(*length)--;
@@ -201,26 +219,26 @@
 
     /* Function to append the '.huff' to the end of an arbitrarily named file, returns pointer to string */
     char *generate_output_filename(char *filename){
-      int i = 0;
-      char *newname;
-      while(*(filename+i) != '\0') i++;
+        int i = 0;
+        char *newname;
+        while(*(filename+i) != '\0') i++;
   
-      //printf("i: %d\n",i);
-      newname = malloc(sizeof(char)*(i+6));
-      i = 0;
-      while(*(filename + i) != '\0') {
-        *(newname+i) = *(filename + i);
-        i++;
-      }
-      *(newname+i++) = '.';
-      *(newname+i++) = 'h';
-      *(newname+i++) = 'u';
-      *(newname+i++) = 'f';
-      *(newname+i++) = 'f';
-      *(newname+i) = '\0';
-      //printf("Old file name: %s\n", filename);
-      //printf("New file name: %s\n", newname);
-      return(newname);
+        //printf("i: %d\n",i);
+        newname = malloc(sizeof(char)*(i+6));
+        i = 0;
+        while(*(filename + i) != '\0') {
+          *(newname+i) = *(filename + i);
+          i++;
+        }
+        *(newname+i++) = '.';
+        *(newname+i++) = 'h';
+        *(newname+i++) = 'u';
+        *(newname+i++) = 'f';
+        *(newname+i++) = 'f';
+        *(newname+i) = '\0';
+        //printf("Old file name: %s\n", filename);
+        //printf("New file name: %s\n", newname);
+        return(newname);
     }
 
 #endif
