@@ -29,17 +29,19 @@
 
 int main(int argc, char * argv[])
 {
-    int i, read_result = 0, mybit, mybyte, bits_remaining = 8;
-    Node *curpos;
-    char cbuff[256];
-    char cchar, nchar;
+    //int i, read_result = 0, mybit, mybyte, bits_remaining = 8;
+    int read_result;
+    unsigned long int inbuff;
+    //Node *curpos;
+    //char cbuff[256];
+
     /* Ensure the user entered a filename */
     if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
         return -1;
     }
     /* Open file as "binary, readonly" */
-    FILE* fhd = fopen(argv[1], "rb");
+    FILE* fhd = fopen(argv[1], "r");
         
     /*Ensure the file can be opened */
     if (fhd == NULL) {
@@ -48,23 +50,32 @@ int main(int argc, char * argv[])
     }
     /*  - Read through file turning over bit data, if the bit is true give the next byte as well */
     // Decided to use fgetc, the header should be shorter, fgetc will be easier to handle bit/byte nonsense
-    cchar = fgetc(fhd);
-    while(curpos != NULL){
-        mybit = () & 0x00000001 
+    printf("\n*******Tree mapping:\n");
+    read_result = fread(&inbuff, 8, 1, fhd);
+    print_binary(1,inbuff,64);
+//    while(curpos != NULL){
+/*    while(i++<64){
+	if(bits_remaining == 0){
+	    bits_remaining = 8;
+	    cchar = fgetc(fhd);
+	}
+        mybit = (int)((cchar>>--bits_remaining) & 0x01);
         if(mybit) {
+	    printf("1 \n Leaf Entry: 0b");
             mybyte = 0;
-            mybyte = cchar<<(8-bits_remaining);
             cchar = fgetc(fhd);
-            mybyte = mybyte|(cchar>>bits_remaining);
+            mybyte = (int)(mybyte|(cchar>>bits_remaining));
+            print_binary_char(mybyte,8);
         }
-        curpos = tree(mybit, mybyte, curpos);
-    }
-
+	else printf("0");
+//        curpos = tree(mybit, mybyte, curpos);
+    }*/
+    printf("\n");
     /*  - Read the file into a buffer of chars, stop when fread no longer returns
      *  	* Go through buffer
      *			-break bytes into bits, turning over true/false to code inside
      */
-    read_result = fread(cbuff, sizeof(char), 256, fhd);
+    /*read_result = fread(cbuff, sizeof(char), 256, fhd);
     while(read_result > 0) {
         i = 0;
         while(i < read_result) {
@@ -74,7 +85,7 @@ int main(int argc, char * argv[])
             i++;
         }
         read_result = fread(cbuff, sizeof(char), 256, fhd);
-    }
+    }*/
     /* Close the input file */
     fclose(fhd);
     

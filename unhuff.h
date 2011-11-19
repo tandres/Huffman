@@ -21,9 +21,9 @@
 #define __UNHUFFH__
 
 #include "huff.h"
-
-    global Node * head;
-    global FILE * fhd;
+#include <stdio.h>
+//    global Node * head;
+//    global FILE * fhd;
     
     /* This function builds the binary Huffman Coding tree */
 	Node * tree(char bit, char byte, Node * curpos) {
@@ -97,5 +97,42 @@
 		return curpos;
 	} 
 
+	/* This function takes in a char and prints l bits of it to stdout in binary form */
+	void print_binary_char(char d, int l){
+		int i;
+		char temp = d;
+		while(i++ < (sizeof(char)*8-l)) printf(" "); 
+		temp = temp << (sizeof(char)*8 - l);
+		i = 0;
+		while(i < l){
+			if(temp & 0x80)	printf("1");
+			else printf("0");
+			temp = temp<<1;
+			i++;	
+		}
+		printf("%d ",(int)d);
+		printf("\n");
+	}
 
+    /* Function to append the '.unhuff' to the end of an arbitrarily named file, returns pointer to string */
+    char *unhuff_output_filename(char *filename){
+        int i = 0;
+        char *newname;
+        while(*(filename+i) != '\0') i++;
+        newname = malloc(sizeof(char)*(i+8));
+        i = 0;
+        while(*(filename + i) != '\0') {
+          *(newname+i) = *(filename + i);
+          i++;
+        }
+        *(newname+i++) = '.';
+        *(newname+i++) = 'u';
+        *(newname+i++) = 'n';
+        *(newname+i++) = 'h';
+        *(newname+i++) = 'u';
+        *(newname+i++) = 'f';
+        *(newname+i++) = 'f';
+        *(newname+i) = '\0';
+        return(newname);
+    }
 #endif

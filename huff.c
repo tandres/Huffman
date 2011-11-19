@@ -227,7 +227,7 @@ int main(int argc, char * argv[])
     unsigned long int output = 0;
     int bits_remaining = sizeof(output) *8;
     // Attempt to open/create the file with .huff appended
-    wfp = fopen(generate_output_filename(argv[1]),"w");
+    wfp = fopen(huff_output_filename(argv[1]),"wb");
     // Store code values in the codetable array
     get_codes(wfp, &bits_remaining, &output, codetree, counts, &code_length, &code);
    	
@@ -256,12 +256,12 @@ int main(int argc, char * argv[])
      * 
      */
     // We need a reasonably sized character buffer for reading
-    char cbuff[256];
+    //char cbuff[256];
 
-    int result;
+    //int result;
     // We have to start the file over
     rewind(fhd);
-    if(wfp) {
+    /*if(wfp) {
         // fread returns number of elements read
         // if EOF then returns zero
         result = fread(cbuff, sizeof(char), 256, fhd);
@@ -270,14 +270,14 @@ int main(int argc, char * argv[])
             while( i < result) {
                 // use character as index, find code and length
                 code_length = counts[(int)cbuff[i]][1];
-                code = counts[(int)cbuff[i]][0];
+                code = counts[(int)cbuff[i]][0];*/
                 /* we have to keep track of how man bits are left
                    to fill each write to maximum. Packing operation:
                    1) Check size constraints
                    2) shift existing bits by max(bits_remaining,code_length)
                    3) write output and zero it
                    4) shift in any remainder */
-                if(code_length < bits_remaining) {
+        /*        if(code_length < bits_remaining) {
                     //no problem just pack em in
                     output = (output << code_length)|code;
                     bits_remaining -= code_length;
@@ -316,7 +316,7 @@ int main(int argc, char * argv[])
     }   
     else {
       printf("Failed to open output file");
-    }
+    }*/
     
     
     
