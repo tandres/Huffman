@@ -83,7 +83,7 @@
         free_tree(root->left);
         node_destruct(root);
     }
-
+    
     /* Function to print out an unsigned long in binary form  */
     void print_binary(int o, unsigned long d, unsigned long l) {
       unsigned long i = 0;
@@ -116,18 +116,19 @@
             //Can get nasty; have to overflow into next output
             *output = (*output << *bits_remaining)|(input>>(length - *bits_remaining));
             fwrite(output,sizeof(char),8,wfp);
-            printf("\nWrote:  ");
-            print_binary(1,*output,(sizeof(unsigned long)*8));
+            //printf("\nWrote:  ");
+            //print_binary(1,*output,(sizeof(unsigned long)*8));
             *output = input; //bits already written out will be shifted away
             *bits_remaining = sizeof(unsigned long)*8 - (length - *bits_remaining);
         }
-        printf("\nOutput: ");
-        print_binary(1,*output,(sizeof(unsigned long)*8 - *bits_remaining));
-        printf(" BitsRem: %d", *bits_remaining);
+        //printf("\nOutput: ");
+        //print_binary(1,*output,(sizeof(unsigned long)*8 - *bits_remaining));
+        //printf(" BitsRem: %d", *bits_remaining);
     }
 
+    
     /* Function to get the codes out of the binary tree */
-    void get_codes(FILE *wfp, int *bits_remaining, unsigned long int *output, Node * root, unsigned long int codetable[257][2], unsigned long int * length, unsigned long int * code) {
+    void get_codes(Node * root, unsigned long int codetable[257][2], unsigned long int * length, unsigned long int * code) {
     	
     	/* The root should never equal null, but just in case, return to avaid a seg fault */
     	if (root == NULL) {
@@ -142,30 +143,57 @@
     	if (root->height == 0) {
     		codetable[root->character][0] = *code;
     		codetable[root->character][1] = *length;
-		printf("\nCharacter: ");
-		print_binary(0,(unsigned long)root->character, 8);
-		//printf("\n");
-                pack(wfp, bits_remaining, output, 1, 1);
-                pack(wfp, bits_remaining, output, root->character, 8);
-		if(root->character == 256) pack(wfp, bits_remaining, output, 0, 1);
-    		//printf("%c, %ld %ld\n", (char) root->character, *code, *length);
+    		//printf("%c, %d %d\n", (char) root->character, *code, *length);
     		return;  	
     	}
-	//printf("0");
-	pack(wfp, bits_remaining, output, 0, 1);
+    	
     	/* If you are not at a leaf, increase the length and go down a level to the left */
     	(*length)++;
     	/* Shift the code left 1 bit (zero fill) to account for the next node's code */
     	*code = (*code)<<1;
-    	get_codes( wfp, bits_remaining, output, root->left, codetable, length, code);
+    	get_codes(root->left, codetable, length, code);
     	
     	/* Add 1 to the code to establish that the next node is to the right */
     	(*code)++;
-    	get_codes( wfp, bits_remaining, output, root->right, codetable, length, code);
+    	get_codes(root->right, codetable, length, code);
     	
     	/* Decrease the length and shift the code right 1 bit to return up to the parent */
     	(*length)--;
     	*code = (*code)>>1; 
+    }
+    
+    /* Function to print the code tree into the header of the file.
+     * This prints the tree in a pre-order fashion 
+     */
+    void print_header(FILE *wfp, Node * root, int *bits_remaining, unsigned long int *output) {
+        
+        if (root == NULL) {
+            return;
+        }
+        
+
+        /* If root is not a leaf node, print a 0, else print 1 and the char */
+        if ((root->left == NULL) && (root->right == NULL)) {
+            pack(wfp, bits_remaining, output, 1, 1);
+            if (root->character != 256) {
+                pack(wfp, bits_remaining, output, root->character, 8);
+            }
+            else {
+                pack(wfp, bits_remaining, output, 255, 8);
+                pack(wfp, bits_remaining, output, 0, 1);
+            }
+        }
+        else {
+            pack(wfp, bits_remaining, output, 0, 1);
+        }
+        
+        print_header(wfp, root->left, bits_remaining, output);
+        print_header(wfp, root->right, bits_remaining, output);
+        
+		/* Once all childern have been process, delete the node */
+        node_destruct(root);
+        root = NULL;
+    
     }
             
     /* Function to print a binary tree in-order */
@@ -174,12 +202,13 @@
             return;
         }
         print_tree(root->left);
-        if (root->height == 0) {
+        if ((root->left == NULL) && (root->right == NULL)) {
+            unsigned long int count = 0;
         	if (root->character == 256) {
-            	printf("%lu, <EOF>, h:%d\n", root->count, root->height);
+            	printf("%lu, <EOF>, h:%d\n", /*root->*/count, root->height);
         	}
         	else {
-            	printf("%lu, <(%d)%c>, h:%d\n", root->count, root->character, (char) root->character, root->height);
+            	printf("%lu, <(%d)%c>, h:%d\n", /*root->*/count, root->character, (char) root->character, root->height);
         	}
        	}
         print_tree(root->right);
@@ -226,9 +255,8 @@
         if ((other != NULL) || (list != NULL)) {
             print_two_lists(list, other);
         }
-    }
-
-
+    } 
+    
     /* Function to append the '.huff' to the end of an arbitrarily named file, returns pointer to string */
     char *huff_output_filename(char *filename){
         int i = 0;
@@ -252,5 +280,7 @@
         //printf("New file name: %s\n", newname);
         return(newname);
     }
+       
+
 
 #endif

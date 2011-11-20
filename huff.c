@@ -30,6 +30,8 @@
 //#define __DEBUGCODES__
 //#define __DEBUGPACK__
 
+
+
 int main(int argc, char * argv[])
 {
     /* Ensure the user entered a filename */
@@ -121,9 +123,7 @@ int main(int argc, char * argv[])
             printf("\n"*code = );
             getchar();
         #endif
-        
-        
-     
+
         // If there isn't anything in the first list, choose the second list
         if (list == NULL) { 
             first = otherlist;
@@ -220,18 +220,20 @@ int main(int argc, char * argv[])
         printf("\n");
     #endif
     
-    FILE *wfp;
+
     unsigned long int code_length = 0;
     unsigned long int code = 0;
     // using unsigned long to cut down on number of writes
     unsigned long int output = 0;
     int bits_remaining = sizeof(output) *8;
     // Attempt to open/create the file with .huff appended
-    wfp = fopen(huff_output_filename(argv[1]),"wb");
-    // Store code values in the codetable array
-    get_codes(wfp, &bits_remaining, &output, codetree, counts, &code_length, &code);
+    char * outname = huff_output_filename(argv[1]);
+    FILE *wfp = fopen(outname,"wb");
+    free(outname);
+   	// Store code values in the codetable array
+   	get_codes(codetree, counts, &code_length, &code);
    	
-    #ifdef __DEBUGCODES__
+   	#ifdef __DEBUGCODES__
         // print 'codetable[][]' for debugging purposes
         {
             int i = 0;
@@ -242,8 +244,8 @@ int main(int argc, char * argv[])
         }
     #endif
    	
-    
-    
+	/* Store the data in the compression tree to the header of the file */
+    print_header(wfp, codetree, &bits_remaining, &output);
 
     /*************************************************
      * This is the start of the section of code which
@@ -256,12 +258,12 @@ int main(int argc, char * argv[])
      * 
      */
     // We need a reasonably sized character buffer for reading
-    //char cbuff[256];
+    char cbuff[256];
 
-    //int result;
+    int result;
     // We have to start the file over
     rewind(fhd);
-    /*if(wfp) {
+    if(wfp) {
         // fread returns number of elements read
         // if EOF then returns zero
         result = fread(cbuff, sizeof(char), 256, fhd);
@@ -270,41 +272,40 @@ int main(int argc, char * argv[])
             while( i < result) {
                 // use character as index, find code and length
                 code_length = counts[(int)cbuff[i]][1];
-                code = counts[(int)cbuff[i]][0];*/
+                code = counts[(int)cbuff[i]][0];
                 /* we have to keep track of how man bits are left
                    to fill each write to maximum. Packing operation:
                    1) Check size constraints
                    2) shift existing bits by max(bits_remaining,code_length)
                    3) write output and zero it
                    4) shift in any remainder */
-        /*        if(code_length < bits_remaining) {
+                if(code_length < bits_remaining) {
                     //no problem just pack em in
                     output = (output << code_length)|code;
                     bits_remaining -= code_length;
-		    #ifdef __DEBUGPACK__
-		        print_binary(1,output,64-bits_remaining);
+		    		#ifdef __DEBUGPACK__
+		        		print_binary(1,output,64-bits_remaining);
                         printf(" C: %c code:",cbuff[i]);
-		        print_binary(0,code,code_length);
+		        		print_binary(0,code,code_length);
                         printf(" brem: %d\n",bits_remaining);
                     #endif
-
                 } 
                 else if(code_length >= bits_remaining) {
                     //Can get nasty; have to overflow into next output
                     output = (output << bits_remaining)|(code>>(code_length - bits_remaining));
-		    #ifdef __DEBUGPACK__
-		        print_binary(1,output,64-bits_remaining);
+		    		#ifdef __DEBUGPACK__
+		        		print_binary(1,output,64-bits_remaining);
                         printf(" C: %c code:",cbuff[i]);
-		        print_binary(0,code,code_length);
+		        		print_binary(0,code,code_length);
                         printf(" brem: %d\n",bits_remaining);
-                    #endif
+            		#endif
                     fwrite(&output,sizeof(output),1,wfp);
                     output = code; //bits already written out will be shifted away
                     bits_remaining = sizeof(output)*8 - (code_length - bits_remaining);
-		    #ifdef __DEBUGPACK__
-		        print_binary(1,output,64-bits_remaining);
+		    		#ifdef __DEBUGPACK__
+		        		print_binary(1,output,64-bits_remaining);
                         printf(" C: %c code:",cbuff[i]);
-		        print_binary(0,code,code_length);
+		        		print_binary(0,code,code_length);
                         printf(" brem: %d\n",bits_remaining);
                     #endif
                 }
@@ -312,20 +313,16 @@ int main(int argc, char * argv[])
             }
             result = fread(cbuff, sizeof(char), 256, fhd);
         }
-        fclose(wfp);
     }   
     else {
-      printf("Failed to open output file");
-    }*/
-    
-    
-    
-    
-    /* Free codetree */
-    free_tree(codetree);
-    
-    /* Close the input file */
+      printf("Failed to open output file\n");
+    }
+
+
+    /* Close the input and output files */
     fclose(fhd);
+    fclose(wfp);
+
     
     
     return 0;

@@ -110,7 +110,7 @@
 			temp = temp<<1;
 			i++;	
 		}
-		printf("%d ",(int)d);
+		//printf("%d ",(int)d);
 		printf("\n");
 	}
 
